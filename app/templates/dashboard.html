@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block title %}工作台{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>工作台</h1>
+    <div class="sub">{{ current_user.role_label }} · {{ current_user.display_name }}，欢迎回来</div>
+  </div>
+  <div class="actions">
+    {% if current_user.role in ('CASHIER', 'MANAGER') %}
+      <a class="btn btn-primary" href="{{ url_for('pages.orders') }}#new-order">去结算下单</a>
+    {% elif current_user.role == 'CUSTOMER' %}
+      <a class="btn btn-primary" href="{{ url_for('pages.orders') }}#new-order">线上下单</a>
+    {% elif current_user.role == 'INVENTORY' %}
+      <a class="btn btn-primary" href="{{ url_for('pages.inventory') }}">查看库存</a>
+    {% endif %}
+  </div>
+</div>
+
+{% if current_user.role == 'MANAGER' and summary %}
+<div class="grid grid-3">
+  <div class="card">
+    <div class="stat">
+      <div class="label">今日已完成订单</div>
+      <div class="value">{{ summary.today.total }}</div>
+      <div class="hint">今日销售额 {{ '%.2f'|format(summary.today.amount or 0) }} 元</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="stat">
+      <div class="label">累计已完成订单</div>
+      <div class="value">{{ summary.total.total }}</div>
+      <div class="hint">累计实付 {{ '%.2f'|format(summary.total.amount or 0) }} 元</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="stat">
+      <div class="label">需要补货商品</div>
+      <div class="value">{{ summary.low_stock_count }}</div>
+      <div class="hint">商品总数 {{ summary.product_count }}，会员总数 {{ summary.member_count }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="grid grid-2">
+  <div class="card">
+    <h2>销售排行榜（前 5）</h2>
+    <table class="table">
+      <thead><tr><th>商品</th><th class="num">销量</th><th class="num">销售额</th></tr></thead>
+      <tbody>
+        {% for row in summary.top_products %}
+          <tr>
+            <td>{{ row.product_name }} <span class="muted mono">{{ row.product_code }}</span></td>
+            <td class="num">{{ row.quantity_sold }}</td>
+            <td class="num">{{ '%.2f'|format(row.sales_amount) }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="3" class="empty">暂无已完成订单</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>低库存提醒</h2>
+    <table class="table">
+      <thead><tr><th>商品</th><th class="num">现存</th><th class="num">预警值</th></tr></thead>
+      <tbody>
+        {% for row in summary.low_stock %}
+          <tr>
+            <td>{{ row.product_name }}</td>
+            <td class="num">{{ row.quantity }}</td>
+            <td class="num">{{ row.reorder_level }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="3" class="empty">库存充足</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% if current_user.role == 'CASHIER' %}
+<div class="card">
+  <h2>待支付订单（顾客线上下单）</h2>
+  <table class="table">
+    <thead><tr><th>订单号</th><th>顾客</th><th>下单时间</th><th class="num">金额</th><th></th></tr></thead>
+    <tbody>
+      {% for order in orders %}
+        <tr>
+          <td class="mono">{{ order.order_no }}</td>
+          <td>{{ order.customer_name }}</td>
+          <td>{{ order.order_time.strftime('%Y-%m-%d %H:%M') if order.order_time else '-' }}</td>
+          <td class="num">{{ '%.2f'|format(order.original_amount) }}</td>
+          <td><a class="btn btn-sm" href="{{ url_for('pages.order_detail', order_id=order.order_id) }}">处理</a></td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5" class="empty">没有待支付订单</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+{% if current_user.role == 'CUSTOMER' and profile %}
+<div class="grid grid-2">
+  <div class="card">
+    <h2>我的会员信息</h2>
+    <dl class="kv">
+      <dt>会员号</dt><dd class="mono">{{ profile.member_no }}</dd>
+      <dt>姓名</dt><dd>{{ profile.member_name }}</dd>
+      <dt>积分余额</dt><dd><strong>{{ profile.points_balance }}</strong> 分（每 10 分抵 1 元）</dd>
+      <dt>注册时间</dt><dd>{{ profile.registered_at.strftime('%Y-%m-%d') if profile.registered_at else '-' }}</dd>
+      <dt>状态</dt><dd>{{ '正常' if profile.status == 'ACTIVE' else '停用' }}</dd>
+    </dl>
+  </div>
+  <div class="card">
+    <h2>最近积分流水</h2>
+    <table class="table">
+      <thead><tr><th>时间</th><th>类型</th><th class="num">变动</th><th class="num">余额</th></tr></thead>
+      <tbody>
+        {% for item in profile.points_history[:6] %}
+          <tr>
+            <td>{{ item.occurred_at.strftime('%m-%d %H:%M') if item.occurred_at else '-' }}</td>
+            <td>{{ {'EARN': '获得', 'REDEEM': '抵扣', 'ADJUST': '调整'}.get(item.change_type, item.change_type) }}</td>
+            <td class="num">{{ '+' if item.points_change > 0 else '' }}{{ item.points_change }}</td>
+            <td class="num">{{ item.balance_after }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="4" class="empty">暂无积分记录</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% if current_user.role == 'INVENTORY' %}
+<div class="card">
+  <h2>需要补货的商品</h2>
+  <table class="table">
+    <thead><tr><th>商品</th><th class="num">现存</th><th class="num">预警值</th><th>更新时间</th><th></th></tr></thead>
+    <tbody>
+      {% for row in low_stock %}
+        <tr>
+          <td>{{ row.product_name }} <span class="muted mono">{{ row.product_code }}</span></td>
+          <td class="num">{{ row.quantity }}</td>
+          <td class="num">{{ row.reorder_level }}</td>
+          <td>{{ row.updated_at.strftime('%Y-%m-%d %H:%M') if row.updated_at else '-' }}</td>
+          <td><a class="btn btn-sm" href="{{ url_for('pages.inventory') }}">去调整</a></td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5" class="empty">库存充足，无需补货</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+{% if current_user.role in ('MANAGER', 'CUSTOMER', 'CASHIER') and orders %}
+<div class="card">
+  <h2>最近订单</h2>
+  <table class="table">
+    <thead><tr><th>订单号</th><th>顾客</th><th>状态</th><th class="num">实付</th><th>时间</th><th></th></tr></thead>
+    <tbody>
+      {% for order in orders %}
+        <tr>
+          <td class="mono">{{ order.order_no }}</td>
+          <td>{{ order.customer_name }}</td>
+          <td><span class="badge {{ 'badge-ok' if order.order_status == 'COMPLETED' else ('badge-warn' if order.order_status == 'PENDING' else 'badge-off') }}">{{ order.status_label }}</span></td>
+          <td class="num">{{ '%.2f'|format(order.paid_amount) }}</td>
+          <td>{{ order.order_time.strftime('%m-%d %H:%M') if order.order_time else '-' }}</td>
+          <td><a class="btn btn-sm" href="{{ url_for('pages.order_detail', order_id=order.order_id) }}">详情</a></td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# 本地配置与运行产物
+.env
+logs/
+*.log
+
+# 编辑器
+.vscode/
+.idea/

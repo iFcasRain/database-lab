@@ -1,6 +1,6 @@
 # 实验结果证据说明
 
-本目录用于保存第三、四周在 SQL Server Management Studio 中实际执行脚本的截图。截图只作为运行证据，不能替代仓库中的 SQL 脚本。
+本目录保存各阶段在 SQL Server Management Studio、浏览器和测试运行中的实际结果。截图与文本输出只作为运行证据，不能替代仓库中的 SQL 脚本与代码。
 
 ## 第三周截图清单
 
@@ -21,6 +21,36 @@
 | `week4_03_constraint_tests.png` | 合法与非法约束测试 | 8 个用例全部 `PASS`，并列出 4 个新增格式约束 |
 | `week4_04_role_tests.png` | 正常权限、越权测试和角色成员关系 | 6 个用例全部 `PASS`，3 组角色成员关系正确 |
 | `week4_05_v01_acceptance.png` | v0.1 集中验收 | 9 项检查全部 `PASS`，最终显示“v0.1 验收通过” |
+
+## 第五周证据
+
+| 文件名 | 内容 | 合格标准 |
+|---|---|---|
+| `week5_01_er_diagram.png` | v1.0 ER 图 | 13 个实体、关键属性、PK/UQ/FK 标记、联系基数与参与约束齐全；可编辑源文件为 `docs/er_diagram.svg` |
+
+## 第六周证据
+
+| 文件名 | 内容 | 合格标准 |
+|---|---|---|
+| `week6_01_migration_output.txt` | `migration.sql` 的完整输出 | 8 个步骤齐全；表 13、视图 3、角色 5、账号 5；无错误消息 |
+| `week6_02_regression_output.txt` | `regression.sql` 的完整输出 | 23 项检查全部 `PASS`，汇总 `pass_count = 23`、`fail_count = 0`，最后显示“v1.0 回归通过” |
+
+## 第七至九周证据
+
+| 文件名 | 内容 | 合格标准 |
+|---|---|---|
+| `week7_01_login.png` | 登录页 | 能看到用户名、密码输入框与演示账号提示 |
+| `week7_02_manager_dashboard.png` | 店长工作台 | 今日/累计订单、销售排行、低库存、最近订单 |
+| `week7_03_manager_products.png` | 店长商品页 | 商品列表、搜索、新增与编辑入口 |
+| `week7_04_manager_orders.png` | 店长订单页 | 订单列表（含状态徽标）与门店结算面板 |
+| `week7_05_stock_inventory.png` | 库存管理员库存页 | 现存数量、预警值、库存状态与盘点入口 |
+| `week7_06_manager_reports.png` | 经营分析页 | 今日/累计统计、销售排行、低库存 |
+| `week7_07_member_dashboard.png` | 顾客工作台 | 会员号、积分余额、积分流水 |
+| `week7_08_member_orders.png` | 顾客订单页 | 仅本人订单、线上下单面板 |
+| `week7_09_member_forbidden.png` | 越权访问提示 | 显示“当前角色（顾客）无权访问该页面”与错误码 |
+| `week7_10_app_test_output.txt` | 应用测试完整输出 | `Ran 34 tests ... OK` |
+
+> 第七至九周的界面截图由应用在真实数据库上渲染出的页面导出；组员也可以在浏览器中按[应用操作手册](../docs/应用操作手册.md)重新截图替换，文件名保持一致即可。
 
 ## 截图要求
 

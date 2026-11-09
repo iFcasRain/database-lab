@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}登录{% endblock %}
+{% block container_class %}login-wrap{% endblock %}
+
+{% block content %}
+<div class="login-card">
+  <h1>小卖部经营管理</h1>
+  <div class="sub">数据库系统实验 · 第二阶段 v1.0</div>
+
+  {% if error %}
+    <div class="alert alert-error">{{ error }}</div>
+  {% endif %}
+
+  <form method="post" action="{{ url_for('pages.login') }}" autocomplete="off">
+    <input type="hidden" name="next" value="{{ request.args.get('next', '') }}">
+    <div class="field">
+      <label for="username">用户名</label>
+      <input id="username" name="username" value="{{ username or '' }}" required maxlength="32" placeholder="例如 cashier01">
+    </div>
+    <div class="field">
+      <label for="password">密码</label>
+      <input id="password" name="password" type="password" required maxlength="64" placeholder="请输入密码">
+    </div>
+    <button class="btn btn-primary" type="submit">登录</button>
+  </form>
+
+  <div class="demo-accounts">
+    演示账号：<code>manager01</code> / <code>cashier01</code> / <code>stock01</code> / <code>member01</code><br>
+    初始口令见 <span class="mono">docs/应用操作手册.md</span>。
+  </div>
+</div>
+{% endblock %}

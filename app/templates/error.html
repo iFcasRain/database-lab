@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}操作未完成{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width:640px;margin:48px auto;text-align:center">
+  <div style="font-size:42px;line-height:1">⚠️</div>
+  <h1 style="font-size:18px;margin:12px 0 6px">操作未完成</h1>
+  <p class="muted" style="margin-top:0">{{ error.message }}</p>
+  <p class="mono muted">错误码：{{ error.code }}{% if request_id %} · 请求号：{{ request_id }}{% endif %}</p>
+  <div class="actions" style="justify-content:center">
+    <a class="btn" href="javascript:history.back()">返回上一页</a>
+    <a class="btn btn-primary" href="{{ url_for('pages.dashboard') }}">回到工作台</a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}会员 {{ member.member_no }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ member.member_name }}（{{ member.member_no }}）</h1>
+    <div class="sub">积分余额 <strong>{{ member.points_balance }}</strong> 分 · {{ '正常' if member.status == 'ACTIVE' else '停用' }}</div>
+  </div>
+  <div class="actions">
+    {% if current_user.role != 'CUSTOMER' %}
+      <a class="btn" href="{{ url_for('pages.members') }}">返回会员列表</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <h2>积分流水</h2>
+  <table class="table">
+    <thead>
+      <tr><th>流水号</th><th>时间</th><th>类型</th><th class="num">变动</th><th class="num">变动后余额</th><th>关联订单</th><th>备注</th></tr>
+    </thead>
+    <tbody>
+      {% for item in member.points_history %}
+        <tr>
+          <td class="mono">{{ item.transaction_no }}</td>
+          <td>{{ item.occurred_at.strftime('%Y-%m-%d %H:%M') if item.occurred_at else '-' }}</td>
+          <td>{{ {'EARN': '获得', 'REDEEM': '抵扣', 'ADJUST': '调整'}.get(item.change_type, item.change_type) }}</td>
+          <td class="num">{{ '+' if item.points_change > 0 else '' }}{{ item.points_change }}</td>
+          <td class="num">{{ item.balance_after }}</td>
+          <td class="mono">{{ item.order_id or '-' }}</td>
+          <td class="muted">{{ item.remark or '' }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="7" class="empty">暂无积分流水</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

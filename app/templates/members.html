@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}会员{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>会员</h1>
+    <div class="sub">共 {{ members|length }} 位会员，积分规则：每消费 1 元得 1 分，每 10 分抵 1 元</div>
+  </div>
+</div>
+
+<div class="card">
+  <form class="inline" method="get" action="{{ url_for('pages.members') }}">
+    <div class="field">
+      <label for="keyword">关键词</label>
+      <input id="keyword" name="keyword" value="{{ keyword }}" placeholder="会员号 / 姓名 / 手机号">
+    </div>
+    <button class="btn" type="submit">查询</button>
+    <a class="btn" href="{{ url_for('pages.members') }}">重置</a>
+  </form>
+</div>
+
+<div class="card">
+  <table class="table">
+    <thead>
+      <tr><th>会员号</th><th>姓名</th><th>手机号</th><th class="num">积分余额</th><th>状态</th><th>注册时间</th><th>操作</th></tr>
+    </thead>
+    <tbody>
+      {% for m in members %}
+        <tr>
+          <td class="mono">{{ m.member_no }}</td>
+          <td>{{ m.member_name }}</td>
+          <td class="mono">{{ m.phone }}</td>
+          <td class="num">{{ m.points_balance }}</td>
+          <td>
+            <span class="badge {{ 'badge-ok' if m.status == 'ACTIVE' else 'badge-off' }}">
+              {{ '正常' if m.status == 'ACTIVE' else '停用' }}
+            </span>
+          </td>
+          <td>{{ m.registered_at.strftime('%Y-%m-%d') if m.registered_at else '-' }}</td>
+          <td><a class="btn btn-sm" href="{{ url_for('pages.member_detail', member_id=m.member_id) }}">积分流水</a></td>
+        </tr>
+      {% else %}
+        <tr><td colspan="7" class="empty">没有符合条件的会员</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

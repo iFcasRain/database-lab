@@ -1,0 +1,62 @@
+﻿已将数据库上下文更改为 "ConvenienceStoreDB"。
+=== 步骤 1：迁移前基线快照 ===
+baseline_item order_no                       original_amount discount_amount paid_amount  item_amount_total
+------------- ------------------------------ --------------- --------------- ------------ -----------------
+订单金额          SO202609230001                            7.50             .50         7.00              7.50
+订单金额          SO202609230002                           11.00             .00        11.00             11.00
+订单金额          SO202609230003                            9.00             .00         9.00              9.00
+baseline_item product_code         product_name                                                                                         total_quantity_sold total_sales_amount
+------------- -------------------- ---------------------------------------------------------------------------------------------------- ------------------- ------------------
+商品销量          P001                 饮用天然水 550ml                                                                                                            3               6.00
+商品销量          P002                 纯牛奶 250ml                                                                                                              3              10.50
+商品销量          P003                 原味薯片 70g                                                                                                               2              11.00
+baseline_item product_code         quantity    reorder_level inventory_status
+------------- -------------------- ----------- ------------- ----------------
+库存            P001                          24            10 库存正常            
+库存            P002                           8            10 需要补货            
+库存            P003                          15             8 库存正常            
+=== 步骤 2：既有表结构保持不变（结论性检查）===
+table_name                                                                                                                       column_count migration_decision
+-------------------------------------------------------------------------------------------------------------------------------- ------------ ------------------
+category                                                                                                                                    5 保持 v0.1           
+employee                                                                                                                                    8 保持 v0.1           
+inventory                                                                                                                                   4 保持 v0.1           
+inventory_transaction                                                                                                                      10 保持 v0.1           
+member                                                                                                                                      8 保持 v0.1           
+points_transaction                                                                                                                          9 保持 v0.1           
+product                                                                                                                                     9 保持 v0.1           
+purchase_order                                                                                                                              9 保持 v0.1           
+purchase_order_item                                                                                                                         6 保持 v0.1           
+sales_order                                                                                                                                10 保持 v0.1           
+sales_order_item                                                                                                                            5 保持 v0.1           
+supplier                                                                                                                                    8 保持 v0.1           
+=== 步骤 3：创建 app_user ===
+app_user 表已创建。
+=== 步骤 4：创建应用视图 ===
+=== 步骤 5：补充索引 ===
+=== 步骤 6：创建角色与应用账号并授权 ===
+已为当前登录名授予应用账号的 IMPERSONATE 权限。
+=== 步骤 7：写入演示账号 ===
+=== 步骤 8：迁移结果 ===
+check_item                 actual_value
+-------------------------- ------------
+业务表数量（v0.1 为 12，v1.0 为 13）           13
+check_item      actual_value
+--------------- ------------
+应用视图数量（含订单列表视图）            3
+check_item                  actual_value
+--------------------------- ------------
+数据库角色数量（第四周 3 个 + v1.0 2 个）            5
+check_item actual_value
+---------- ------------
+应用账号数量                5
+user_id     username                         display_name                                       role         employee_id member_id   status    
+----------- -------------------------------- -------------------------------------------------- ------------ ----------- ----------- ----------
+          1 manager01                        陈店长                                                MANAGER              301        NULL ACTIVE    
+          2 cashier01                        刘收银                                                CASHIER              302        NULL ACTIVE    
+          3 stock01                          赵理货                                                INVENTORY            303        NULL ACTIVE    
+          4 member01                         张晓雨                                                CUSTOMER            NULL         201 ACTIVE    
+          5 member02                         李明                                                 CUSTOMER            NULL         202 ACTIVE    
+migration_result                                   
+---------------------------------------------------
+v1.0 迁移完成：既有 12 张表未改变，新增 app_user、3 个应用视图和 5 个应用账号。

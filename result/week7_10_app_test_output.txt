@@ -1,0 +1,39 @@
+test_adjust_without_change_rejected (__main__.InventoryTests.test_adjust_without_change_rejected) ... ok
+test_inventory_clerk_can_adjust_stock (__main__.InventoryTests.test_inventory_clerk_can_adjust_stock) ... ok
+test_negative_inventory_rejected (__main__.InventoryTests.test_negative_inventory_rejected) ... ok
+test_api_requires_login (__main__.LoginTests.test_api_requires_login) ... ok
+test_login_missing_fields (__main__.LoginTests.test_login_missing_fields) ... ok
+test_login_success (__main__.LoginTests.test_login_success) ... ok
+test_login_unknown_user (__main__.LoginTests.test_login_unknown_user) ... ok
+test_login_wrong_password (__main__.LoginTests.test_login_wrong_password) ... ok
+test_page_redirects_to_login (__main__.LoginTests.test_page_redirects_to_login) ... ok
+test_unknown_api_returns_404 (__main__.LoginTests.test_unknown_api_returns_404) ... ok
+test_cancel_pending_order (__main__.OrderFlowTests.test_cancel_pending_order) ... ok
+test_cannot_confirm_completed_order (__main__.OrderFlowTests.test_cannot_confirm_completed_order) ... ok
+test_customer_cannot_see_other_member_order (__main__.OrderFlowTests.test_customer_cannot_see_other_member_order) ... ok
+test_insufficient_stock_rolls_back (__main__.OrderFlowTests.test_insufficient_stock_rolls_back) ... ok
+test_member_points_redeem (__main__.OrderFlowTests.test_member_points_redeem) ... ok
+test_online_order_pending_then_confirm (__main__.OrderFlowTests.test_online_order_pending_then_confirm) ... ok
+test_redeem_points_not_multiple_of_ten (__main__.OrderFlowTests.test_redeem_points_not_multiple_of_ten) ... ok
+test_store_order_completes_and_deducts_stock (__main__.OrderFlowTests.test_store_order_completes_and_deducts_stock) ... ok
+test_cashier_cannot_adjust_stock (__main__.PermissionTests.test_cashier_cannot_adjust_stock) ... ok
+test_cashier_cannot_create_product (__main__.PermissionTests.test_cashier_cannot_create_product) ... ok
+test_customer_cannot_create_product (__main__.PermissionTests.test_customer_cannot_create_product) ... ok
+test_customer_cannot_view_inventory_module (__main__.PermissionTests.test_customer_cannot_view_inventory_module) ... ok
+test_inventory_clerk_cannot_view_orders (__main__.PermissionTests.test_inventory_clerk_cannot_view_orders) ... ok
+test_page_forbidden_returns_error_page (__main__.PermissionTests.test_page_forbidden_returns_error_page) ... ok
+test_cashier_cannot_read_summary (__main__.ReportTests.test_cashier_cannot_read_summary) ... ok
+test_manager_can_read_summary (__main__.ReportTests.test_manager_can_read_summary) ... ok
+test_bad_payment_method_rejected (__main__.ValidationAndConstraintTests.test_bad_payment_method_rejected) ... ok
+test_bad_product_code_format_rejected (__main__.ValidationAndConstraintTests.test_bad_product_code_format_rejected) ... ok
+test_duplicate_product_code_rejected (__main__.ValidationAndConstraintTests.test_duplicate_product_code_rejected) ... ok
+test_empty_items_rejected (__main__.ValidationAndConstraintTests.test_empty_items_rejected) ... ok
+test_negative_price_rejected (__main__.ValidationAndConstraintTests.test_negative_price_rejected) ... ok
+test_sql_injection_keyword_returns_no_rows (__main__.ValidationAndConstraintTests.test_sql_injection_keyword_returns_no_rows) ... ok
+test_unknown_category_rejected (__main__.ValidationAndConstraintTests.test_unknown_category_rejected) ... ok
+test_zero_quantity_order_rejected (__main__.ValidationAndConstraintTests.test_zero_quantity_order_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 34 tests in 5.733s
+
+OK

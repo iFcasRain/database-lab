@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+{% block title %}订单{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>订单</h1>
+    <div class="sub">
+      {% if current_user.role == 'CUSTOMER' %}
+        这里只显示属于当前会员账号的订单
+      {% else %}
+        共 {{ orders|length }} 条记录
+      {% endif %}
+    </div>
+  </div>
+  {% if current_user.role in ('CASHIER', 'MANAGER', 'CUSTOMER') %}
+    <a class="btn btn-primary" href="#new-order">新建订单</a>
+  {% endif %}
+</div>
+
+<div class="card">
+  <form class="inline" method="get" action="{{ url_for('pages.orders') }}">
+    <div class="field">
+      <label for="keyword">关键词</label>
+      <input id="keyword" name="keyword" value="{{ keyword }}" placeholder="订单号 / 顾客">
+    </div>
+    <div class="field">
+      <label for="status">状态</label>
+      <select id="status" name="status">
+        <option value="">全部</option>
+        {% for option in status_options %}
+          <option value="{{ option.value }}" {{ 'selected' if status == option.value else '' }}>{{ option.label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button class="btn" type="submit">查询</button>
+    <a class="btn" href="{{ url_for('pages.orders') }}">重置</a>
+  </form>
+</div>
+
+<div class="card">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>订单号</th><th>顾客</th><th>经办店员</th><th>状态</th>
+        <th class="num">原价</th><th class="num">优惠</th><th class="num">实付</th>
+        <th class="num">明细</th><th>下单时间</th><th>操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for order in orders %}
+        <tr>
+          <td class="mono">{{ order.order_no }}</td>
+          <td>{{ order.customer_name }}</td>
+          <td>{{ order.cashier_name }}</td>
+          <td>
+            <span class="badge {{ 'badge-ok' if order.order_status == 'COMPLETED' else ('badge-warn' if order.order_status == 'PENDING' else 'badge-off') }}">
+              {{ order.status_label }}
+            </span>
+          </td>
+          <td class="num">{{ '%.2f'|format(order.original_amount) }}</td>
+          <td class="num">{{ '%.2f'|format(order.discount_amount) }}</td>
+          <td class="num">{{ '%.2f'|format(order.paid_amount) }}</td>
+          <td class="num">{{ order.item_count }}</td>
+          <td>{{ order.order_time.strftime('%Y-%m-%d %H:%M') if order.order_time else '-' }}</td>
+          <td class="actions">
+            <a class="btn btn-sm" href="{{ url_for('pages.order_detail', order_id=order.order_id) }}">详情</a>
+            {% if order.order_status == 'PENDING' and current_user.role in ('CASHIER', 'MANAGER') %}
+              <button class="btn btn-sm btn-primary"
+                      onclick="confirmOrder({{ order.order_id }}, {{ order.paid_amount }})">确认收款</button>
+            {% endif %}
+            {% if order.order_status == 'PENDING' %}
+              <button class="btn btn-sm btn-danger"
+                      onclick="cancelOrder({{ order.order_id }})">取消</button>
+            {% endif %}
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="10" class="empty">没有符合条件的订单</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if current_user.role in ('CASHIER', 'MANAGER', 'CUSTOMER') %}
+<div class="card" id="new-order">
+  <h2>{{ '线上下单（待支付）' if current_user.role == 'CUSTOMER' else '门店结算下单' }}</h2>
+  <div class="grid grid-2">
+    <div>
+      <div class="form-grid">
+        <div class="field">
+          <label for="item-product">选择商品</label>
+          <select id="item-product">
+            {% for p in products %}
+              <option value="{{ p.product_id }}"
+                      data-price="{{ p.selling_price }}"
+                      data-name="{{ p.product_name }}"
+                      data-code="{{ p.product_code }}"
+                      data-stock="{{ p.quantity }}">
+                {{ p.product_code }} · {{ p.product_name }}（￥{{ '%.2f'|format(p.selling_price) }}，库存 {{ p.quantity }}）
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="item-quantity">数量</label>
+          <input id="item-quantity" type="number" min="1" max="999" step="1" value="1">
+        </div>
+        <div class="field">
+          <label>&nbsp;</label>
+          <button class="btn" type="button" id="btn-add-item">加入清单</button>
+        </div>
+      </div>
+
+      <form id="order-form" style="margin-top:16px">
+        <div class="form-grid">
+          {% if current_user.role in ('CASHIER', 'MANAGER') %}
+          <div class="field">
+            <label for="order-member">会员号（可选）</label>
+            <input id="order-member" maxlength="20" placeholder="例如 M001">
+          </div>
+          <div class="field">
+            <label for="order-payment">支付方式</label>
+            <select id="order-payment">
+              {% for option in payment_options %}
+                <option value="{{ option.value }}">{{ option.label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          {% endif %}
+          <div class="field">
+            <label for="order-redeem">使用积分抵扣</label>
+            <input id="order-redeem" type="number" min="0" step="10" value="0" placeholder="10 分抵 1 元">
+          </div>
+        </div>
+        <div class="actions" style="margin-top:16px">
+          <button class="btn btn-primary" type="submit">提交订单</button>
+          <button class="btn" type="button" id="btn-clear-items">清空清单</button>
+        </div>
+      </form>
+    </div>
+
+    <div>
+      <table class="table" id="cart-table">
+        <thead>
+          <tr><th>商品</th><th class="num">单价</th><th class="num">数量</th><th class="num">小计</th><th></th></tr>
+        </thead>
+        <tbody id="cart-body">
+          <tr><td colspan="5" class="empty">还没有选择商品</td></tr>
+        </tbody>
+      </table>
+      <div style="margin-top:12px;text-align:right">
+        合计：<strong id="cart-total">0.00</strong> 元
+      </div>
+      {% if current_user.role == 'CUSTOMER' %}
+        <div class="alert alert-info" style="margin-top:12px">
+          顾客线上下单后状态为“待支付”，库存不会立即扣减；店员确认收款后才扣库存并结算积分。
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if current_user.role in ('CASHIER', 'MANAGER', 'CUSTOMER') %}
+<script>
+const cart = [];
+
+function renderCart() {
+  const body = document.getElementById("cart-body");
+  if (!cart.length) {
+    body.innerHTML = '<tr><td colspan="5" class="empty">还没有选择商品</td></tr>';
+    document.getElementById("cart-total").textContent = "0.00";
+    return;
+  }
+  body.innerHTML = cart.map((line, index) => `
+    <tr>
+      <td>${line.code} · ${line.name}</td>
+      <td class="num">${money(line.price)}</td>
+      <td class="num">${line.quantity}</td>
+      <td class="num">${money(line.price * line.quantity)}</td>
+      <td><button class="btn btn-sm btn-danger" data-remove="${index}">移除</button></td>
+    </tr>`).join("");
+  const total = cart.reduce((sum, line) => sum + line.price * line.quantity, 0);
+  document.getElementById("cart-total").textContent = money(total);
+}
+
+document.getElementById("btn-add-item").addEventListener("click", () => {
+  const select = document.getElementById("item-product");
+  const option = select.options[select.selectedIndex];
+  if (!option) return;
+  const quantity = Number(document.getElementById("item-quantity").value || 0);
+  if (!quantity || quantity < 1) {
+    toast("数量必须大于 0", "error");
+    return;
+  }
+  const productId = Number(option.value);
+  const existing = cart.find((line) => line.product_id === productId);
+  if (existing) {
+    existing.quantity += quantity;
+  } else {
+    cart.push({
+      product_id: productId,
+      code: option.dataset.code,
+      name: option.dataset.name,
+      price: Number(option.dataset.price),
+      quantity: quantity,
+    });
+  }
+  renderCart();
+});
+
+document.getElementById("cart-body").addEventListener("click", (event) => {
+  const index = event.target.dataset.remove;
+  if (index === undefined) return;
+  cart.splice(Number(index), 1);
+  renderCart();
+});
+
+document.getElementById("btn-clear-items").addEventListener("click", () => {
+  cart.length = 0;
+  renderCart();
+});
+
+document.getElementById("order-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!cart.length) {
+    toast("请先添加商品", "error");
+    return;
+  }
+  const body = {
+    items: cart.map((line) => ({ product_id: line.product_id, quantity: line.quantity })),
+    redeem_points: document.getElementById("order-redeem").value || 0,
+  };
+  const memberField = document.getElementById("order-member");
+  if (memberField) body.member_no = memberField.value;
+  const paymentField = document.getElementById("order-payment");
+  if (paymentField) body.payment_method = paymentField.value;
+
+  const button = event.target.querySelector("button[type=submit]");
+  button.disabled = true;
+  try {
+    const order = await apiRequest("/api/orders", { method: "POST", body });
+    toast("订单 " + order.order_no + " 已创建", "success");
+    setTimeout(() => window.location.href = "/orders/" + order.order_id, 600);
+  } catch (error) {
+    showError(error);
+  } finally {
+    button.disabled = false;
+  }
+});
+
+async function confirmOrder(orderId, amount) {
+  const method = prompt("请选择支付方式：CASH / MOBILE / CARD", "CASH");
+  if (!method) return;
+  const redeem = prompt("使用积分抵扣（填 0 表示不使用）", "0");
+  if (redeem === null) return;
+  try {
+    await apiRequest("/api/orders/" + orderId + "/confirm", {
+      method: "POST",
+      body: { payment_method: method.trim().toUpperCase(), redeem_points: redeem || 0 },
+    });
+    toast("订单已完成收款", "success");
+    setTimeout(() => window.location.reload(), 600);
+  } catch (error) {
+    showError(error);
+  }
+}
+
+async function cancelOrder(orderId) {
+  if (!confirm("确认取消该订单？取消不会产生库存或积分变化。")) return;
+  try {
+    await apiRequest("/api/orders/" + orderId + "/cancel", { method: "POST", body: {} });
+    toast("订单已取消", "success");
+    setTimeout(() => window.location.reload(), 600);
+  } catch (error) {
+    showError(error);
+  }
+}
+
+renderCart();
+</script>
+{% else %}
+<script>
+async function cancelOrder(orderId) {
+  if (!confirm("确认取消该订单？")) return;
+  try {
+    await apiRequest("/api/orders/" + orderId + "/cancel", { method: "POST", body: {} });
+    toast("订单已取消", "success");
+    setTimeout(() => window.location.reload(), 600);
+  } catch (error) {
+    showError(error);
+  }
+}
+</script>
+{% endif %}
+{% endblock %}

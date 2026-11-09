@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block title %}库存{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>库存</h1>
+    <div class="sub">共 {{ rows|length }} 条记录，低于或等于预警值的商品会被标记</div>
+  </div>
+</div>
+
+<div class="card">
+  <form class="inline" method="get" action="{{ url_for('pages.inventory') }}">
+    <div class="field">
+      <label for="keyword">关键词</label>
+      <input id="keyword" name="keyword" value="{{ keyword }}" placeholder="商品名称 / 编码">
+    </div>
+    <div class="field">
+      <label for="low_only">筛选</label>
+      <select id="low_only" name="low_only">
+        <option value="">全部商品</option>
+        <option value="1" {{ 'selected' if low_only else '' }}>只看需要补货</option>
+      </select>
+    </div>
+    <button class="btn" type="submit">查询</button>
+    <a class="btn" href="{{ url_for('pages.inventory') }}">重置</a>
+  </form>
+</div>
+
+<div class="card">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>编码</th><th>商品</th><th>分类</th>
+        <th class="num">现存数量</th><th class="num">预警值</th>
+        <th>库存状态</th><th>更新时间</th>
+        {% if current_user.role in ('INVENTORY', 'MANAGER') %}<th>操作</th>{% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+        <tr>
+          <td class="mono">{{ row.product_code }}</td>
+          <td>{{ row.product_name }}</td>
+          <td>{{ row.category_name }}</td>
+          <td class="num">{{ row.quantity }}</td>
+          <td class="num">{{ row.reorder_level }}</td>
+          <td>
+            {% if row.low_stock_flag %}
+              <span class="badge badge-warn">需要补货</span>
+            {% else %}
+              <span class="badge badge-ok">库存正常</span>
+            {% endif %}
+          </td>
+          <td>{{ row.updated_at.strftime('%Y-%m-%d %H:%M') if row.updated_at else '-' }}</td>
+          {% if current_user.role in ('INVENTORY', 'MANAGER') %}
+          <td>
+            <button class="btn btn-sm"
+                    onclick='openAdjustModal({{ row|tojson }})'>盘点调整</button>
+          </td>
+          {% endif %}
+        </tr>
+      {% else %}
+        <tr><td colspan="8" class="empty">没有符合条件的库存记录</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if current_user.role in ('INVENTORY', 'MANAGER') %}
+<div class="modal-mask" id="adjust-modal">
+  <div class="modal">
+    <h3>库存盘点调整</h3>
+    <form id="adjust-form">
+      <input type="hidden" id="af-product-id">
+      <div class="field" style="margin-bottom:12px">
+        <label>商品</label>
+        <div id="af-product-name" class="mono">-</div>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label>调整前数量</label>
+          <input id="af-before" disabled>
+        </div>
+        <div class="field">
+          <label for="af-quantity">盘点后数量</label>
+          <input id="af-quantity" name="quantity" type="number" step="1" min="0" required>
+        </div>
+      </div>
+      <div class="field" style="margin-top:12px">
+        <label for="af-reason">调整原因</label>
+        <input id="af-reason" name="reason" maxlength="200" placeholder="例如：月度盘点 / 破损报废 / 到货补录">
+      </div>
+      <div class="footer">
+        <button type="button" class="btn" data-close-modal>取消</button>
+        <button type="submit" class="btn btn-primary">提交调整</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openAdjustModal(row) {
+  document.getElementById("af-product-id").value = row.product_id;
+  document.getElementById("af-product-name").textContent =
+    row.product_name + "（" + row.product_code + "）";
+  document.getElementById("af-before").value = row.quantity;
+  document.getElementById("af-quantity").value = row.quantity;
+  document.getElementById("af-reason").value = "";
+  openModal("adjust-modal");
+}
+
+document.getElementById("adjust-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const body = {
+    product_id: document.getElementById("af-product-id").value,
+    quantity: document.getElementById("af-quantity").value,
+    reason: document.getElementById("af-reason").value,
+  };
+  const button = event.target.querySelector("button[type=submit]");
+  button.disabled = true;
+  try {
+    const data = await apiRequest("/api/inventory/adjust", { method: "POST", body });
+    toast("库存已从 " + data.before_quantity + " 调整为 " + data.after_quantity, "success");
+    setTimeout(() => window.location.reload(), 600);
+  } catch (error) {
+    showError(error);
+  } finally {
+    button.disabled = false;
+  }
+});
+</script>
+{% endif %}
+{% endblock %}
